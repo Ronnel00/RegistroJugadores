@@ -5,7 +5,7 @@ namespace RegistroJugadores.Models
     public class Jugadores
     {
         [Key]
-        public int jugadorId { get; set; }
+        public int JugadorId { get; set; }
 
 
         [Required(ErrorMessage = "El campo Nombre es obligatorio.")]
