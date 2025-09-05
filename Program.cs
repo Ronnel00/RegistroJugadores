@@ -1,6 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using RegistroJugadores.Components;
 using RegistroJugadores.DAL;
+using RegistroJugadores.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -10,6 +11,7 @@ builder.Services.AddRazorComponents()
 var ConStr = builder.Configuration.GetConnectionString("SqlConStr");
 
 builder.Services.AddDbContextFactory<Contexto>(o => o.UseSqlServer(ConStr));
+builder.Services.AddScoped<JugadoresService>();
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
