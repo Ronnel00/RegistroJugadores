@@ -33,11 +33,42 @@
                     <span class="bi bi-arrow-left"></span> Volver
                 </a>
                 <button type="submit" class="btn btn-primary bi bi-floppy"> Modificar</button>
-                <button type="button" class="btn btn-danger bi bi-trash" @onclick="Eliminar"> Eliminar</button>
+                <button type="button" class="btn btn-danger bi bi-trash" @onclick="MostrarModal"> Eliminar</button>
             </div>
         </div>
     </div>
 </EditForm>
+
+@if (MostrarConfirmacion)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog">
+            <div class="modal-content shadow-lg">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title">Eliminar Jugador</h5>
+                    <button type="button" class="btn-close btn-close-white" @onclick="CerrarModal"></button>
+                </div>
+                <div class="modal-body text-center">
+                    <p class="text-danger"><strong>¿Estás seguro de que quieres eliminar al jugador?</strong></p>
+                    <div class="card p-2 shadow-sm">
+                        <h6><strong>Datos del Jugador</strong></h6>
+                        <p><strong>Id:</strong> @Jugador.JugadorId</p>
+                        <p><strong>Nombre:</strong> @Jugador.Nombres</p>
+                        <p><strong>Partidas:</strong> @Jugador.Partida</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-danger" @onclick="Eliminar">
+                        <span class="bi bi-trash"></span> Eliminar
+                    </button>
+                    <button class="btn btn-secondary" @onclick="CerrarModal">
+                        <span class="bi bi-arrow-left"></span> Volver
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
 
 @code {
     [Parameter]
@@ -45,6 +76,7 @@
 
     public Jugadores Jugador { get; set; } = new Jugadores();
     public string Mensaje { get; set; } = string.Empty;
+    public bool MostrarConfirmacion { get; set; } = false;
 
     protected override async Task OnInitializedAsync()
     {
@@ -56,13 +88,19 @@
         var creado = await jugadoresService.Guardar(Jugador);
 
         if (creado)
-        {
             Mensaje = "Se ha modificado correctamente";
-        }
         else
-        {
             Mensaje = "No se ha podido modificar correctamente";
-        }
+    }
+
+    private void MostrarModal()
+    {
+        MostrarConfirmacion = true;
+    }
+
+    private void CerrarModal()
+    {
+        MostrarConfirmacion = false;
     }
 
     private async Task Eliminar()
@@ -78,5 +116,7 @@
         {
             Mensaje = "No se ha podido eliminar correctamente";
         }
+
+        MostrarConfirmacion = false;
     }
 }
