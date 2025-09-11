@@ -1,0 +1,106 @@
+﻿@page "/Partida/Create"
+
+@inject PartidasService partidasService
+@inject JugadoresService jugadoresService
+@inject NavigationManager navigationManager
+
+<PageTitle>Crear Partida</PageTitle>
+
+<EditForm Model="Partida" OnValidSubmit="Guardar">
+    <DataAnnotationsValidator />
+    <ValidationSummary />
+
+    <div class="container">
+        <div class="card shadow-lg">
+            <div class="card-header text-center">
+                <h5 class="card-title">Crear Partida</h5>
+            </div>
+
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label"><strong>Jugador 1</strong></label>
+                    <InputSelect class="form-control form-select" @bind-Value="Partida.Jugador1Id">
+                        <option value="">Elija una opción</option>
+                        @foreach (var jugador in ListaJugadores)
+                        {
+                            <option value="@jugador.JugadorId">@jugador.Nombres</option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="() => Partida.Jugador1Id" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label"><strong>Jugador 2</strong></label>
+                    <InputSelect class="form-control form-select" @bind-Value="Partida.Jugador2Id">
+                        <option value="">Opcional</option>
+                        @foreach (var jugador in ListaJugadores)
+                        {
+                            <option value="@jugador.JugadorId">@jugador.Nombres</option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="() => Partida.Jugador2Id" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label"><strong>Estado</strong></label>
+                    <InputText class="form-control" @bind-Value="Partida.EstadoPartida" />
+                    <ValidationMessage For="() => Partida.EstadoPartida" />
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label"><strong>Turno del jugador</strong></label>
+                    <InputSelect class="form-control form-select" @bind-Value="Partida.TurnoJugadorId">
+                        <option value="">Elija una opción</option>
+                        @foreach (var jugador in ListaJugadores)
+                        {
+                            <option value="@jugador.JugadorId">@jugador.Nombres</option>
+                        }
+                    </InputSelect>
+                    <ValidationMessage For="() => Partida.TurnoJugadorId" />
+                </div>
+            </div>
+
+            <div class="card-footer text-center mt-2">
+                <a href="/Partidas" class="btn btn-secondary">
+                    <span class="bi bi-arrow-left"></span> Volver
+                </a>
+                <button type="submit" class="btn btn-primary bi bi-floppy"> Guardar</button>
+            </div>
+        </div>
+    </div>
+</EditForm>
+
+@if (!string.IsNullOrEmpty(Mensaje))
+{
+    <div class="alert alert-info mt-2">@Mensaje</div>
+}
+
+@code {
+    public Partidas Partida { get; set; } = new Partidas();
+    public List<Jugadores> ListaJugadores { get; set; } = new List<Jugadores>();
+    public string Mensaje { get; set; } = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        ListaJugadores = await jugadoresService.Listar(j => j.JugadorId > 0);
+    }
+
+    private async Task Guardar()
+    {
+        if (string.IsNullOrWhiteSpace(Partida.EstadoPartida))
+            Partida.EstadoPartida = "En curso";
+
+        var creado = await partidasService.Guardar(Partida);
+
+        if (creado)
+        {
+            Mensaje = "Partida guardada correctamente";
+            await Task.Delay(800);
+            navigationManager.NavigateTo("/Partidas");
+        }
+        else
+        {
+            Mensaje = "No se pudo guardar la partida";
+        }
+    }
+}
