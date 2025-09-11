@@ -14,9 +14,6 @@ namespace RegistroJugadores.DAL
         {
             base.OnModelCreating(modelBuilder);
 
-            modelBuilder.Entity<Jugadores>().ToTable("");
-            modelBuilder.Entity<Partidas>().ToTable("");
-
             modelBuilder.Entity<Partidas>()
                 .HasOne(p => p.Jugador1)
                 .WithMany()
