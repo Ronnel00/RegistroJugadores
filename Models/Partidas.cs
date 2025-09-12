@@ -12,9 +12,6 @@ namespace RegistroJugadores.Models
         public int Jugador1Id { get; set; }
 
         public int? Jugador2Id { get; set; }
-        [Required(ErrorMessage = "El estado de la partida es obligatorio.")]
-        [StringLength(20, ErrorMessage = "El estado no debe exceder los 20 caracteres.")]
-        public string EstadoPartida { get; set; }
 
         public int? GanadorId { get; set; }
 
@@ -25,6 +22,9 @@ namespace RegistroJugadores.Models
         public DateTime FechaInicio { get; set; } = DateTime.UtcNow;
 
         public DateTime? FechaFin { get; set; }
+
+        [Required]
+        public string EstadoPartida { get; set; } = "Pendiente";
 
         [ForeignKey(nameof(Jugador1Id))]
         public virtual Jugadores Jugador1 { get; set; }
@@ -37,6 +37,5 @@ namespace RegistroJugadores.Models
 
         [ForeignKey(nameof(TurnoJugadorId))]
         public virtual Jugadores TurnoJugador { get; set; }
-
     }
 }

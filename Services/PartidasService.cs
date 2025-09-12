@@ -36,8 +36,8 @@ namespace RegistroJugadores.Services
             private async Task<bool> Modificar(Partidas partida)
             {
                 await using var contexto = await DbFactory.CreateDbContextAsync();
-                contexto.Update(partida);
-                return await contexto.SaveChangesAsync() > 0;
+                contexto.Update(partida).State = EntityState.Modified;
+            return await contexto.SaveChangesAsync() > 0;
             }
 
             public async Task<Partidas?> Buscar(int PartidaId)
