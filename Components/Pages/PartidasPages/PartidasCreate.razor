@@ -42,29 +42,6 @@
                 </div>
 
                 <div class="mb-3">
-                    <label class="form-label"><strong>Turno del jugador</strong></label>
-                    <InputSelect class="form-control" @bind-Value="Partida.TurnoJugadorId">
-                        <option value="">Seleccione Turno</option>
-                        @foreach (var jugador in ListaJugadores)
-                        {
-                            <option value="@jugador.JugadorId">@jugador.Nombres</option>
-                        }
-                    </InputSelect>
-                    <ValidationMessage For="() => Partida.TurnoJugadorId" />
-                </div>
-
-                <div class="mb-3">
-                    <label class="form-label"><strong>Ganador</strong></label>
-                    <InputSelect class="form-control" @bind-Value="Partida.GanadorId">
-                        <option value="">Opcional</option>
-                        @foreach (var jugador in ListaJugadores)
-                        {
-                            <option value="@jugador.JugadorId">@jugador.Nombres</option>
-                        }
-                    </InputSelect>
-                </div>
-
-                <div class="mb-3">
                     <label class="form-label"><strong>Estado de la Partida</strong></label>
                     <InputSelect class="form-control" @bind-Value="Partida.EstadoPartida" @onchange="EstadoCambiado">
                         <option value="Iniciado">Iniciado</option>
@@ -132,11 +109,14 @@
 
     private async Task Guardar()
     {
-        if (Partida.Jugador1Id == 0 || Partida.TurnoJugadorId == 0)
+        if (Partida.Jugador1Id == 0)
         {
-            Mensaje = "Debe seleccionar Jugador 1 y Turno.";
+            Mensaje = "Debe seleccionar Jugador 1.";
             return;
         }
+
+        Partida.TurnoJugadorId = Partida.Jugador1Id;
+        Partida.GanadorId = null;
 
         if (string.IsNullOrWhiteSpace(Partida.EstadoPartida))
             Partida.EstadoPartida = "Iniciado";
