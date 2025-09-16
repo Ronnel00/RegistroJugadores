@@ -13,6 +13,8 @@ namespace RegistroJugadores.Models
 
         [Required(ErrorMessage = "El campo Partida es obligatorio.")]
         [Range(0, int.MaxValue, ErrorMessage = "El numero de partidas debe ser un valor valido.")]
-        public int Partida { get; set; }
+        public int Victorias { get; set; } = 0;
+        public int Empates { get; set; } = 0;
+        public int Derrotas { get; set; } = 0;
     }
 }

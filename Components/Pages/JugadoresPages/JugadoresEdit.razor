@@ -23,8 +23,8 @@
                 </div>
                 <div class="mb-3">
                     <label class="form-label"><strong>Partidas</strong></label>
-                    <InputNumber class="form-control" @bind-Value="Jugador.Partida"></InputNumber>
-                    <ValidationMessage For="(() => Jugador.Partida)" />
+                    <InputNumber class="form-control" @bind-Value="Jugador.Victorias"></InputNumber>
+                    <ValidationMessage For="(() => Jugador.Victorias)" />
                 </div>
             </div>
 
@@ -54,7 +54,7 @@
                         <h6><strong>Datos del Jugador</strong></h6>
                         <p><strong>Id:</strong> @Jugador.JugadorId</p>
                         <p><strong>Nombre:</strong> @Jugador.Nombres</p>
-                        <p><strong>Partidas:</strong> @Jugador.Partida</p>
+                        <p><strong>Partidas:</strong> @Jugador.Victorias</p>
                     </div>
                 </div>
                 <div class="modal-footer">
