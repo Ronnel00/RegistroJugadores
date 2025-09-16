@@ -54,7 +54,7 @@
                         <tr>
                             <td>@jugador.JugadorId</td>
                             <td>@jugador.Nombres</td>
-                            <td>@jugador.Partida</td>
+                            <td>@jugador.Victorias</td>
                             <td>
                                 <a class="btn btn-outline-primary" href="/Jugador/Edit/@jugador.JugadorId">
                                     <i class="bi bi-pencil-square"></i>
@@ -72,7 +72,7 @@
         </div>
         <div class="card-footer d-flex justify-content-between">
             <span><strong>Cantidad:</strong> @ListaJugadores.Count()</span>
-            <span><strong>Total Partidas:</strong> @ListaJugadores.Sum(j => j.Partida)</span>
+            <span><strong>Total Partidas:</strong> @ListaJugadores.Sum(j => j.Victorias)</span>
         </div>
     </div>
 </div>
@@ -103,7 +103,7 @@
         }
         else if (Filtro == "Partida" && int.TryParse(ValorFiltro, out int partidas))
         {
-            ListaJugadores = await jugadoresService.Listar(j => j.Partida == partidas);
+            ListaJugadores = await jugadoresService.Listar(j => j.Victorias == partidas);
         }
         else
         {
