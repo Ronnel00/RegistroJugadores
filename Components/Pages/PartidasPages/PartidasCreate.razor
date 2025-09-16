@@ -11,8 +11,6 @@
     <DataAnnotationsValidator />
     <ValidationSummary />
 
-    <div class="container">
-        <div class="card shadow-lg">
             <div class="card-header text-center">
                 <h5 class="card-title">Crear Partida</h5>
             </div>
@@ -60,13 +58,12 @@
                     }
                 </div>
             </div>
-
             <div class="card-footer text-center mt-2">
-                <a href="/Partida/Index" class="btn btn-secondary">Volver</a>
-                <button type="submit" class="btn btn-primary">Guardar</button>
+                <a href="/Jugador/Index" class="btn btn-secondary">
+                    <span class="bi bi-arrow-left"></span> Volver
+                </a>
+                <button type="submit" class="btn btn-primary bi bi-floppy"> Guardar</button>
             </div>
-        </div>
-    </div>
 </EditForm>
 
 @if (!string.IsNullOrEmpty(Mensaje))
