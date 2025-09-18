@@ -18,9 +18,10 @@ namespace RegistroJugadores.Models
         [Required(ErrorMessage = "Debe indicar el turno del jugador.")]
         public int TurnoJugadorId { get; set; }
 
-        [Required]
-        public DateTime FechaInicio { get; set; } = DateTime.UtcNow;
+        [StringLength(9)]
+        public string EstadoTablero { get; set; }
 
+        public DateTime FechaInicio { get; set; } = DateTime.UtcNow;
         public DateTime? FechaFin { get; set; }
 
         [Required]
