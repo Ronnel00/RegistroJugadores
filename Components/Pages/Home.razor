@@ -51,7 +51,6 @@
 
     protected override async Task OnInitializedAsync()
     {
-        // Listar todos: tu servicio tiene Listar(Expression), usamos j => true
         jugadores = await jugadoresService.Listar(j => true);
     }
 
@@ -61,7 +60,7 @@
             {
                 Jugador1Id = jugador1Id,
                 Jugador2Id = jugador2Id,
-                EstadoTablero = "---------", // 9 guiones: tablero vacío
+                EstadoTablero = "---------", 
                 TurnoJugadorId = jugador1Id,
                 EstadoPartida = "En progreso",
                 FechaInicio = DateTime.UtcNow
@@ -74,7 +73,6 @@
         }
         else
         {
-            // Puedes loggear/mostrar error si lo deseas
         }
     }
 }
