@@ -9,7 +9,7 @@
 <div class="container mt-3">
     <div class="card shadow-lg">
         <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="mb-0">Consulta de Partidas</h5>
+            <h5 class="mb-0">Registro de Partidas</h5>
             <a href="/Partida/Create" class="btn btn-success">
                 <i class="bi bi-plus-square"></i> Crear
             </a>
@@ -40,14 +40,16 @@
                 </div>
             </div>
 
-            <table class="table table-striped table-hover">
-                <thead>
+            <table class="table table-striped table-hover text-center align-middle shadow-sm">
+                <thead class="table-light">
                     <tr>
                         <th>PartidaId</th>
                         <th>Jugador 1</th>
                         <th>Jugador 2</th>
+                        <th>Estado Partida</th>
+                        <th>Estado Tablero</th>
                         <th>Ganador</th>
-                        <th>Estado</th>
+                        <th>Turno Jugador</th>
                         <th>Fecha Inicio</th>
                         <th>Fecha Fin</th>
                         <th>Editar</th>
@@ -63,17 +65,19 @@
                                 <td>@partida.PartidaId</td>
                                 <td>@partida.Jugador1?.Nombres</td>
                                 <td>@(partida.Jugador2?.Nombres ?? "")</td>
-                                <td>@(partida.Ganador?.Nombres ?? "")</td>
                                 <td>@partida.EstadoPartida</td>
+                                <td>@partida.EstadoTablero</td>
+                                <td>@(partida.Ganador != null ? partida.Ganador.Nombres : "Empate")</td>
+                                <td>@partida.TurnoJugador?.Nombres</td>
                                 <td>@partida.FechaInicio.ToString("dd/MM/yyyy HH:mm")</td>
                                 <td>@(partida.FechaFin?.ToString("dd/MM/yyyy HH:mm") ?? "En curso")</td>
                                 <td>
-                                    <a class="btn btn-outline-primary" href="/Partida/Edit/@partida.PartidaId">
+                                    <a class="btn btn-outline-primary btn-sm" href="/Partida/Edit/@partida.PartidaId">
                                         <i class="bi bi-pencil-square"></i>
                                     </a>
                                 </td>
                                 <td>
-                                    <button class="btn btn-outline-danger" @onclick="() => ConfirmarEliminar(partida)">
+                                    <button class="btn btn-outline-danger btn-sm" @onclick="() => ConfirmarEliminar(partida)">
                                         <i class="bi bi-trash"></i>
                                     </button>
                                 </td>
@@ -83,7 +87,7 @@
                     else
                     {
                         <tr>
-                            <td colspan="9" class="text-center text-muted">No se encontraron partidas.</td>
+                            <td colspan="11" class="text-center text-muted">No se encontraron partidas.</td>
                         </tr>
                     }
                 </tbody>

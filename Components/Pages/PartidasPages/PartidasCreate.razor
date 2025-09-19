@@ -1,6 +1,6 @@
 ﻿@page "/Partida/Create"
-
 @rendermode InteractiveServer
+
 @inject PartidasService partidasService
 @inject JugadoresService jugadoresService
 @inject NavigationManager navigationManager
@@ -11,64 +11,65 @@
     <DataAnnotationsValidator />
     <ValidationSummary />
 
-            <div class="card-header text-center">
-                <h5 class="card-title">Crear Partida</h5>
-            </div>
+    <div class="card-header text-center">
+        <h5 class="card-title">Crear Partida</h5>
+    </div>
 
-            <div class="card-body">
-                <div class="mb-3">
-                    <label class="form-label"><strong>Jugador 1</strong></label>
-                    <InputSelect class="form-control" @bind-Value="Partida.Jugador1Id">
-                        <option value="">Seleccione Jugador 1</option>
-                        @foreach (var jugador in ListaJugadores)
-                        {
-                            <option value="@jugador.JugadorId">@jugador.Nombres</option>
-                        }
-                    </InputSelect>
-                    <ValidationMessage For="() => Partida.Jugador1Id" />
-                </div>
+    <div class="card-body">
+        <div class="mb-3">
+            <label class="form-label"><strong>Jugador 1</strong></label>
+            <InputSelect class="form-control" @bind-Value="Partida.Jugador1Id">
+                <option value="0">Seleccione Jugador 1</option>
+                @foreach (var jugador in ListaJugadores)
+                {
+                    <option value="@jugador.JugadorId">@jugador.Nombres</option>
+                }
+            </InputSelect>
+            <ValidationMessage For="() => Partida.Jugador1Id" />
+        </div>
 
-                <div class="mb-3">
-                    <label class="form-label"><strong>Jugador 2</strong></label>
-                    <InputSelect class="form-control" @bind-Value="Partida.Jugador2Id">
-                        <option value="">Opcional</option>
-                        @foreach (var jugador in ListaJugadores)
-                        {
-                            <option value="@jugador.JugadorId">@jugador.Nombres</option>
-                        }
-                    </InputSelect>
-                </div>
+        <div class="mb-3">
+            <label class="form-label"><strong>Jugador 2</strong></label>
+            <InputSelect class="form-control" @bind-Value="Partida.Jugador2Id">
+                <option value="0">Opcional</option>
+                @foreach (var jugador in ListaJugadores)
+                {
+                    <option value="@jugador.JugadorId">@jugador.Nombres</option>
+                }
+            </InputSelect>
+        </div>
 
-                <div class="mb-3">
-                    <label class="form-label"><strong>Estado de la Partida</strong></label>
-                    <InputSelect class="form-control" @bind-Value="Partida.EstadoPartida" @onchange="EstadoCambiado">
-                        <option value="Iniciado">Iniciado</option>
-                        <option value="En Proceso">En Proceso</option>
-                        <option value="Finalizado">Finalizado</option>
-                    </InputSelect>
-                    <ValidationMessage For="() => Partida.EstadoPartida" />
-                </div>
+        <div class="mb-3">
+            <label class="form-label"><strong>Estado de la Partida</strong></label>
+            <InputSelect class="form-control" @bind-Value="Partida.EstadoPartida" @onchange="EstadoCambiado">
+                <option value="Iniciado">Iniciado</option>
+                <option value="En Proceso">En Proceso</option>
+                <option value="Finalizado">Finalizado</option>
+            </InputSelect>
+            <ValidationMessage For="() => Partida.EstadoPartida" />
+        </div>
 
-                <div class="mb-3">
-                    <label class="form-label"><strong>Fecha Fin</strong></label>
-                    <InputDate class="form-control" @bind-Value="Partida.FechaFin" disabled="@(!MostrarFechaFin)" />
-                    @if (!MostrarFechaFin)
-                    {
-                        <small class="text-muted">En curso</small>
-                    }
-                </div>
-            </div>
-            <div class="card-footer text-center mt-2">
-                <a href="/Jugador/Index" class="btn btn-secondary">
-                    <span class="bi bi-arrow-left"></span> Volver
-                </a>
-                <button type="submit" class="btn btn-primary bi bi-floppy"> Guardar</button>
-            </div>
+        <div class="mb-3">
+            <label class="form-label"><strong>Fecha Fin</strong></label>
+            <InputDate class="form-control" @bind-Value="Partida.FechaFin" disabled="@(!MostrarFechaFin)" />
+            @if (!MostrarFechaFin)
+            {
+                <small class="text-muted">En curso</small>
+            }
+        </div>
+    </div>
+
+    <div class="card-footer text-center mt-2">
+        <a href="/Jugador/Index" class="btn btn-secondary">
+            <span class="bi bi-arrow-left"></span> Volver
+        </a>
+        <button type="submit" class="btn btn-primary bi bi-floppy"> Guardar</button>
+    </div>
 </EditForm>
 
-@if (!string.IsNullOrEmpty(Mensaje))
+@if (!string.IsNullOrWhiteSpace(Mensaje))
 {
-    <div class="alert alert-info mt-2">@Mensaje</div>
+    <div class="alert alert-danger mt-3">@Mensaje</div>
 }
 
 @code {
@@ -79,8 +80,15 @@
 
     protected override async Task OnInitializedAsync()
     {
-        ListaJugadores = await jugadoresService.Listar(j => j.JugadorId > 0);
-        ActualizarFechaFin();
+        try
+        {
+            ListaJugadores = await jugadoresService.Listar(j => j.JugadorId > 0);
+            ActualizarFechaFin();
+        }
+        catch (Exception ex)
+        {
+            Mensaje = $"Error al cargar jugadores: {ex.Message}";
+        }
     }
 
     private void EstadoCambiado(ChangeEventArgs e)
@@ -94,8 +102,7 @@
         if (Partida.EstadoPartida == "Finalizado")
         {
             MostrarFechaFin = true;
-            if (Partida.FechaFin == null)
-                Partida.FechaFin = DateTime.UtcNow;
+            Partida.FechaFin ??= DateTime.UtcNow;
         }
         else
         {
@@ -106,24 +113,35 @@
 
     private async Task Guardar()
     {
-        if (Partida.Jugador1Id == 0)
+        try
         {
-            Mensaje = "Debe seleccionar Jugador 1.";
-            return;
+            if (Partida.Jugador1Id == 0)
+            {
+                Mensaje = "Debe seleccionar Jugador 1.";
+                return;
+            }
+
+            Partida.TurnoJugadorId = Partida.Jugador1Id;
+            Partida.GanadorId = null;
+
+            if (string.IsNullOrWhiteSpace(Partida.EstadoPartida))
+                Partida.EstadoPartida = "Iniciado";
+
+            ActualizarFechaFin();
+
+            var creado = await partidasService.Guardar(Partida);
+            if (creado != null)
+            {
+                navigationManager.NavigateTo("/Partida/Index", forceLoad: true);
+            }
+            else
+            {
+                Mensaje = "No se pudo guardar la partida.";
+            }
         }
-
-        Partida.TurnoJugadorId = Partida.Jugador1Id;
-        Partida.GanadorId = null;
-
-        if (string.IsNullOrWhiteSpace(Partida.EstadoPartida))
-            Partida.EstadoPartida = "Iniciado";
-
-        ActualizarFechaFin();
-
-        var creado = await partidasService.Guardar(Partida);
-        if (creado)
-            navigationManager.NavigateTo("/Partida/Index", forceLoad: true);
-        else
-            Mensaje = "No se pudo guardar la partida";
+        catch (Exception ex)
+        {
+            Mensaje = $"Error al guardar la partida: {ex.Message}";
+        }
     }
 }

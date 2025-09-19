@@ -27,7 +27,7 @@ else
                     <div class="mb-3">
                         <label class="form-label"><strong>Jugador 1</strong></label>
                         <InputSelect class="form-control" @bind-Value="Partida.Jugador1Id">
-                            <option value="">Seleccione Jugador 1</option>
+                            <option value="0">Seleccione Jugador 1</option>
                             @foreach (var jugador in ListaJugadores)
                             {
                                 <option value="@jugador.JugadorId">@jugador.Nombres</option>
@@ -39,7 +39,7 @@ else
                     <div class="mb-3">
                         <label class="form-label"><strong>Jugador 2</strong></label>
                         <InputSelect class="form-control" @bind-Value="Partida.Jugador2Id">
-                            <option value="">Opcional</option>
+                            <option value="0">Opcional</option>
                             @foreach (var jugador in ListaJugadores)
                             {
                                 <option value="@jugador.JugadorId">@jugador.Nombres</option>
@@ -50,7 +50,7 @@ else
                     <div class="mb-3">
                         <label class="form-label"><strong>Turno del jugador</strong></label>
                         <InputSelect class="form-control" @bind-Value="Partida.TurnoJugadorId">
-                            <option value="">Seleccione Turno</option>
+                            <option value="0">Seleccione Turno</option>
                             @foreach (var jugador in ListaJugadores)
                             {
                                 <option value="@jugador.JugadorId">@jugador.Nombres</option>
@@ -62,7 +62,7 @@ else
                     <div class="mb-3">
                         <label class="form-label"><strong>Ganador</strong></label>
                         <InputSelect class="form-control" @bind-Value="Partida.GanadorId">
-                            <option value="">Opcional</option>
+                            <option value="0">Opcional</option>
                             @foreach (var jugador in ListaJugadores)
                             {
                                 <option value="@jugador.JugadorId">@jugador.Nombres</option>
@@ -136,8 +136,7 @@ else
         if (Partida.EstadoPartida == "Finalizado")
         {
             MostrarFechaFin = true;
-            if (Partida.FechaFin == null)
-                Partida.FechaFin = DateTime.UtcNow;
+            Partida.FechaFin ??= DateTime.UtcNow;
         }
         else
         {
@@ -170,7 +169,7 @@ else
             original.FechaFin = Partida.FechaFin;
 
             var modificado = await partidasService.Guardar(original);
-            if (modificado)
+            if (modificado != null)
                 navigationManager.NavigateTo("/Partida/Index", forceLoad: true);
             else
                 Mensaje = "No se pudo modificar la partida";
