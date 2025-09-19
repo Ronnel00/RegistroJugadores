@@ -20,10 +20,9 @@
                 <div class="col-3">
                     <label class="form-label"><strong>Filtrar por:</strong></label>
                     <InputSelect class="form-select" @bind-Value="Filtro">
-                        <option value="" selected disabled>Seleccione</option>
+                        <option value="" selected disabled>Elija una opción</option>
                         <option value="Id">JugadorId</option>
                         <option value="Nombre">Nombre</option>
-                        <option value="Partida">Partidas</option>
                     </InputSelect>
                 </div>
 
@@ -32,7 +31,10 @@
                     <div class="input-group">
                         <input class="form-control" @bind="ValorFiltro" placeholder="Buscar..." />
                         <button class="btn btn-primary" @onclick="Buscar">
-                            <i class="bi bi-search"></i> Buscar
+                            <i class="bi bi-search"></i>
+                        </button>
+                        <button class="btn btn-secondary" @onclick="CargarJugadores">
+                            <i class="bi bi-arrow-clockwise"></i>
                         </button>
                     </div>
                 </div>
@@ -42,10 +44,11 @@
                 <thead>
                     <tr>
                         <th>JugadorId</th>
-                        <th>Nombre</th>
-                        <th>Partidas</th>
+                        <th>Nombres</th>
+                        <th>Victorias</th>
+                        <th>Empates</th>
+                        <th>Derrotas</th>
                         <th>Editar</th>
-                        <th>Eliminar</th>
                     </tr>
                 </thead>
                 <tbody>
@@ -55,14 +58,11 @@
                             <td>@jugador.JugadorId</td>
                             <td>@jugador.Nombres</td>
                             <td>@jugador.Victorias</td>
+                            <td>@jugador.Empates</td>
+                            <td>@jugador.Derrotas</td>
                             <td>
                                 <a class="btn btn-outline-primary" href="/Jugador/Edit/@jugador.JugadorId">
                                     <i class="bi bi-pencil-square"></i>
-                                </a>
-                            </td>
-                            <td>
-                                <a class="btn btn-outline-danger" href="/Jugador/Delete/@jugador.JugadorId">
-                                    <i class="bi bi-trash"></i>
                                 </a>
                             </td>
                         </tr>
@@ -72,7 +72,6 @@
         </div>
         <div class="card-footer d-flex justify-content-between">
             <span><strong>Cantidad:</strong> @ListaJugadores.Count()</span>
-            <span><strong>Total Partidas:</strong> @ListaJugadores.Sum(j => j.Victorias)</span>
         </div>
     </div>
 </div>
@@ -84,12 +83,18 @@
 
     protected override async Task OnInitializedAsync()
     {
+        await CargarJugadores();
+    }
+
+    private async Task CargarJugadores()
+    {
         ListaJugadores = await jugadoresService.Listar(j => j.JugadorId > 0);
     }
 
     private async Task Buscar()
     {
-        if (string.IsNullOrWhiteSpace(Filtro)) return;
+        if (string.IsNullOrWhiteSpace(Filtro))
+            return;
 
         if (Filtro == "Id" && int.TryParse(ValorFiltro, out int id))
         {
@@ -100,14 +105,6 @@
             ListaJugadores = await jugadoresService.Listar(j =>
                 j.Nombres.ToLower().Contains(ValorFiltro.ToLower())
             );
-        }
-        else if (Filtro == "Partida" && int.TryParse(ValorFiltro, out int partidas))
-        {
-            ListaJugadores = await jugadoresService.Listar(j => j.Victorias == partidas);
-        }
-        else
-        {
-            ListaJugadores = await jugadoresService.Listar(j => j.JugadorId > 0);
         }
     }
 }
