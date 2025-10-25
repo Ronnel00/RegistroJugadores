@@ -1,0 +1,178 @@
+﻿@page "/Partida/Edit/{id:int}"
+
+@rendermode InteractiveServer
+@inject PartidasService partidasService
+@inject JugadoresService jugadoresService
+@inject NavigationManager navigationManager
+
+<PageTitle>Modificar Partida</PageTitle>
+
+@if (Partida == null)
+{
+    <p><em>Cargando...</em></p>
+}
+else
+{
+    <EditForm Model="Partida" OnValidSubmit="Modificar">
+        <DataAnnotationsValidator />
+        <ValidationSummary />
+
+        <div class="container">
+            <div class="card shadow-lg">
+                <div class="card-header text-center">
+                    <h5 class="card-title">Modificar Partida</h5>
+                </div>
+
+                <div class="card-body">
+                    <div class="mb-3">
+                        <label class="form-label"><strong>Jugador 1</strong></label>
+                        <InputSelect class="form-control" @bind-Value="Partida.Jugador1Id">
+                            <option value="0">Seleccione Jugador 1</option>
+                            @foreach (var jugador in ListaJugadores)
+                            {
+                                <option value="@jugador.JugadorId">@jugador.Nombres</option>
+                            }
+                        </InputSelect>
+                        <ValidationMessage For="() => Partida.Jugador1Id" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label"><strong>Jugador 2</strong></label>
+                        <InputSelect class="form-control" @bind-Value="Partida.Jugador2Id">
+                            <option value="0">Opcional</option>
+                            @foreach (var jugador in ListaJugadores)
+                            {
+                                <option value="@jugador.JugadorId">@jugador.Nombres</option>
+                            }
+                        </InputSelect>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label"><strong>Turno del jugador</strong></label>
+                        <InputSelect class="form-control" @bind-Value="Partida.TurnoJugadorId">
+                            <option value="0">Seleccione Turno</option>
+                            @foreach (var jugador in ListaJugadores)
+                            {
+                                <option value="@jugador.JugadorId">@jugador.Nombres</option>
+                            }
+                        </InputSelect>
+                        <ValidationMessage For="() => Partida.TurnoJugadorId" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label"><strong>Ganador</strong></label>
+                        <InputSelect class="form-control" @bind-Value="Partida.GanadorId">
+                            <option value="0">Opcional</option>
+                            @foreach (var jugador in ListaJugadores)
+                            {
+                                <option value="@jugador.JugadorId">@jugador.Nombres</option>
+                            }
+                        </InputSelect>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label"><strong>Estado de la Partida</strong></label>
+                        <InputSelect class="form-control" @bind-Value="Partida.EstadoPartida" @onchange="EstadoCambiado">
+                            <option value="Iniciado">Iniciado</option>
+                            <option value="En Proceso">En Proceso</option>
+                            <option value="Finalizado">Finalizado</option>
+                        </InputSelect>
+                        <ValidationMessage For="() => Partida.EstadoPartida" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label"><strong>Fecha Fin</strong></label>
+                        <InputDate class="form-control" @bind-Value="Partida.FechaFin" disabled="@(!MostrarFechaFin)" />
+                        @if (!MostrarFechaFin)
+                        {
+                            <small class="text-muted">En curso</small>
+                        }
+                    </div>
+                </div>
+
+                <div class="card-footer text-center mt-2">
+                    <a href="/Partida/Index" class="btn btn-secondary">Volver</a>
+                    <button type="submit" class="btn btn-primary">Modificar</button>
+                </div>
+            </div>
+        </div>
+    </EditForm>
+
+    @if (!string.IsNullOrEmpty(Mensaje))
+    {
+        <div class="alert alert-info mt-2">@Mensaje</div>
+    }
+}
+
+@code {
+    [Parameter] public int id { get; set; }
+    public Partidas? Partida { get; set; }
+    public List<Jugadores> ListaJugadores { get; set; } = new();
+    public string Mensaje { get; set; } = string.Empty;
+    public bool MostrarFechaFin { get; set; } = false;
+
+    protected override async Task OnInitializedAsync()
+    {
+        ListaJugadores = await jugadoresService.Listar(j => j.JugadorId > 0);
+        Partida = await partidasService.Buscar(id);
+
+        if (Partida == null)
+        {
+            navigationManager.NavigateTo("/Partida/Index");
+            return;
+        }
+
+        ActualizarFechaFin();
+    }
+
+    private void EstadoCambiado(ChangeEventArgs e)
+    {
+        Partida.EstadoPartida = e.Value?.ToString();
+        ActualizarFechaFin();
+    }
+
+    private void ActualizarFechaFin()
+    {
+        if (Partida.EstadoPartida == "Finalizado")
+        {
+            MostrarFechaFin = true;
+            Partida.FechaFin ??= DateTime.UtcNow;
+        }
+        else
+        {
+            MostrarFechaFin = false;
+            Partida.FechaFin = null;
+        }
+    }
+
+    private async Task Modificar()
+    {
+        if (Partida.Jugador1Id == 0 || Partida.TurnoJugadorId == 0)
+        {
+            Mensaje = "Debe seleccionar Jugador 1 y Turno.";
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(Partida.EstadoPartida))
+            Partida.EstadoPartida = "Iniciado";
+
+        ActualizarFechaFin();
+
+        var original = await partidasService.Buscar(Partida.PartidaId);
+        if (original != null)
+        {
+            original.Jugador1Id = Partida.Jugador1Id;
+            original.Jugador2Id = Partida.Jugador2Id;
+            original.TurnoJugadorId = Partida.TurnoJugadorId;
+            original.GanadorId = Partida.GanadorId;
+            original.EstadoPartida = Partida.EstadoPartida;
+            original.FechaFin = Partida.FechaFin;
+
+            var modificado = await partidasService.Guardar(original);
+            if (modificado != null)
+                navigationManager.NavigateTo("/Partida/Index", forceLoad: true);
+            else
+                Mensaje = "No se pudo modificar la partida";
+        }
+    }
+}

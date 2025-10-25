@@ -1,0 +1,198 @@
+﻿@page "/Partida/Index"
+
+@rendermode InteractiveServer
+@inject PartidasService partidasService
+@inject NavigationManager navigationManager
+
+<PageTitle>Consulta de Partidas</PageTitle>
+
+<div class="container mt-3">
+    <div class="card shadow-lg">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h5 class="mb-0">Registro de Partidas</h5>
+            <a href="/Partida/Create" class="btn btn-success">
+                <i class="bi bi-plus-square"></i> Crear
+            </a>
+        </div>
+
+        <div class="card-body">
+            <div class="row mb-3">
+                <div class="col-3">
+                    <label class="form-label"><strong>Filtrar por:</strong></label>
+                    <InputSelect class="form-select" @bind-Value="Filtro">
+                        <option value="" selected disabled>Seleccione</option>
+                        <option value="Id">PartidaId</option>
+                        <option value="Jugador1">Jugador 1</option>
+                        <option value="Jugador2">Jugador 2</option>
+                        <option value="Ganador">Ganador</option>
+                        <option value="Estado">Estado</option>
+                    </InputSelect>
+                </div>
+
+                <div class="col-4">
+                    <label class="form-label"><strong>Búsqueda:</strong></label>
+                    <div class="input-group">
+                        <input class="form-control" @bind="ValorFiltro" placeholder="Buscar..." />
+                        <button class="btn btn-primary" @onclick="Buscar">
+                            <i class="bi bi-search"></i> Buscar
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <table class="table table-striped table-hover text-center align-middle shadow-sm">
+                <thead class="table-light">
+                    <tr>
+                        <th>PartidaId</th>
+                        <th>Jugador 1</th>
+                        <th>Jugador 2</th>
+                        <th>Estado Partida</th>
+                        <th>Estado Tablero</th>
+                        <th>Ganador</th>
+                        <th>Turno Jugador</th>
+                        <th>Fecha Inicio</th>
+                        <th>Fecha Fin</th>
+                        <th>Editar</th>
+                        <th>Eliminar</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @if (ListaPartidas.Any())
+                    {
+                        @foreach (var partida in ListaPartidas)
+                        {
+                            <tr>
+                                <td>@partida.PartidaId</td>
+                                <td>@partida.Jugador1?.Nombres</td>
+                                <td>@(partida.Jugador2?.Nombres ?? "")</td>
+                                <td>@partida.EstadoPartida</td>
+                                <td>@partida.EstadoTablero</td>
+                                <td>@(partida.Ganador != null ? partida.Ganador.Nombres : "Empate")</td>
+                                <td>@partida.TurnoJugador?.Nombres</td>
+                                <td>@partida.FechaInicio.ToString("dd/MM/yyyy HH:mm")</td>
+                                <td>@(partida.FechaFin?.ToString("dd/MM/yyyy HH:mm") ?? "En curso")</td>
+                                <td>
+                                    <a class="btn btn-outline-primary btn-sm" href="/Partida/Edit/@partida.PartidaId">
+                                        <i class="bi bi-pencil-square"></i>
+                                    </a>
+                                </td>
+                                <td>
+                                    <button class="btn btn-outline-danger btn-sm" @onclick="() => ConfirmarEliminar(partida)">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    }
+                    else
+                    {
+                        <tr>
+                            <td colspan="11" class="text-center text-muted">No se encontraron partidas.</td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <div class="card-footer d-flex justify-content-between">
+            <span><strong>Cantidad:</strong> @ListaPartidas.Count()</span>
+        </div>
+    </div>
+</div>
+
+@if (PartidaSeleccionada != null)
+{
+    <div class="modal fade show d-block" tabindex="-1" style="background-color: rgba(0,0,0,0.5);">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Confirmar Eliminación</h5>
+                    <button type="button" class="btn-close" @onclick="CancelarEliminar"></button>
+                </div>
+                <div class="modal-body">
+                    <p>¿Está seguro que desea eliminar la partida con ID @PartidaSeleccionada.PartidaId?</p>
+                </div>
+                <div class="modal-footer">
+                    <button class="btn btn-secondary" @onclick="CancelarEliminar">Cancelar</button>
+                    <button class="btn btn-danger" @onclick="EliminarPartidaConfirmada">Eliminar</button>
+                </div>
+            </div>
+        </div>
+    </div>
+}
+
+@code {
+    public List<Partidas> ListaPartidas { get; set; } = new();
+    public string Filtro { get; set; } = string.Empty;
+    public string ValorFiltro { get; set; } = string.Empty;
+
+    private Partidas PartidaSeleccionada { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        ListaPartidas = await partidasService.Listar(p => p.PartidaId > 0);
+    }
+
+    private async Task Buscar()
+    {
+        if (string.IsNullOrWhiteSpace(Filtro) || string.IsNullOrWhiteSpace(ValorFiltro))
+        {
+            ListaPartidas = await partidasService.Listar(p => p.PartidaId > 0);
+            return;
+        }
+
+        if (Filtro == "Id" && int.TryParse(ValorFiltro, out int id))
+        {
+            ListaPartidas = await partidasService.Listar(p => p.PartidaId == id);
+        }
+        else if (Filtro == "Jugador1")
+        {
+            ListaPartidas = await partidasService.Listar(p =>
+                p.Jugador1 != null && p.Jugador1.Nombres.Contains(ValorFiltro)
+            );
+        }
+        else if (Filtro == "Jugador2")
+        {
+            ListaPartidas = await partidasService.Listar(p =>
+                p.Jugador2 != null && p.Jugador2.Nombres.Contains(ValorFiltro)
+            );
+        }
+        else if (Filtro == "Ganador")
+        {
+            ListaPartidas = await partidasService.Listar(p =>
+                p.Ganador != null && p.Ganador.Nombres.Contains(ValorFiltro)
+            );
+        }
+        else if (Filtro == "Estado")
+        {
+            ListaPartidas = await partidasService.Listar(p =>
+                p.EstadoPartida.Contains(ValorFiltro)
+            );
+        }
+
+        if (!ListaPartidas.Any())
+            ListaPartidas = await partidasService.Listar(p => p.PartidaId > 0);
+    }
+
+    private void ConfirmarEliminar(Partidas partida)
+    {
+        PartidaSeleccionada = partida;
+    }
+
+    private void CancelarEliminar()
+    {
+        PartidaSeleccionada = null;
+    }
+
+    private async Task EliminarPartidaConfirmada()
+    {
+        if (PartidaSeleccionada != null)
+        {
+            var eliminado = await partidasService.Eliminar(PartidaSeleccionada.PartidaId);
+            if (eliminado)
+            {
+                ListaPartidas.Remove(PartidaSeleccionada);
+            }
+            PartidaSeleccionada = null;
+        }
+    }
+}

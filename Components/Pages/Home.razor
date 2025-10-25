@@ -1,7 +1,78 @@
 ﻿@page "/"
 
+@rendermode InteractiveServer
+@using RegistroJugadores.Models
+@inject RegistroJugadores.Services.JugadoresService jugadoresService
+@inject RegistroJugadores.Services.PartidasService partidasService
+@inject NavigationManager NavManager
+
 <PageTitle>Home</PageTitle>
 
-<h1>Hello, world!</h1>
+<div class="container mx-auto max-w-lg p-6 bg-white rounded-lg shadow-xl text-center">
+    <h1 class="text-2xl font-bold mb-4">Nueva Partida</h1>
 
-Welcome to your new app.
+    <div class="mb-4">
+        <label class="block">Jugador X</label>
+        <select class="form-select w-full" @bind="jugador1Id">
+            <option value="0">-- Selecciona --</option>
+            @foreach (var j in jugadores)
+            {
+                <option value="@j.JugadorId" disabled="@(jugador2Id != 0 && j.JugadorId == jugador2Id)">
+                    @j.Nombres
+                </option>
+            }
+        </select>
+    </div>
+
+    <div class="mb-4">
+        <label class="block">Jugador O</label>
+        <select class="form-select w-full" @bind="jugador2Id">
+            <option value="0">-- Selecciona --</option>
+            @foreach (var j in jugadores)
+            {
+                <option value="@j.JugadorId" disabled="@(jugador1Id != 0 && j.JugadorId == jugador1Id)">
+                    @j.Nombres
+                </option>
+            }
+        </select>
+    </div>
+
+    <button class="btn btn-success btn-lg mt-4"
+            disabled="@(jugador1Id == 0 || jugador2Id == 0 || jugador1Id == jugador2Id)"
+            @onclick="IniciarPartida">
+        Iniciar Partida
+    </button>
+</div>
+
+@code {
+    private List<Jugadores> jugadores = new();
+    private int jugador1Id;
+    private int jugador2Id;
+
+    protected override async Task OnInitializedAsync()
+    {
+        jugadores = await jugadoresService.Listar(j => true);
+    }
+
+    private async Task IniciarPartida()
+    {
+        var partida = new Partidas
+            {
+                Jugador1Id = jugador1Id,
+                Jugador2Id = jugador2Id,
+                EstadoTablero = "---------", 
+                TurnoJugadorId = jugador1Id,
+                EstadoPartida = "En progreso",
+                FechaInicio = DateTime.UtcNow
+            };
+
+        var creada = await partidasService.Guardar(partida);
+        if (creada != null)
+        {
+            NavManager.NavigateTo($"/board/{creada.PartidaId}");
+        }
+        else
+        {
+        }
+    }
+}
