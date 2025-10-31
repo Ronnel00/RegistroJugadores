@@ -1,0 +1,173 @@
+﻿@page "/board/{partidaId:int}/{jugador}"
+@rendermode InteractiveServer
+@using RegistroJugadores.ApiDTO
+@inject IPartidasApiService PartidasApi
+@inject IMovimientosApiService MovimientosApi
+@inject NavigationManager NavManager
+
+<div class="container mx-auto max-w-lg p-6 bg-white rounded-lg shadow-xl text-center">
+    @if (!cargado)
+    {
+        <p>Cargando...</p>
+    }
+    else if (!juegoListo)
+    {
+        <div class="alert alert-warning p-3 rounded mb-3">
+            <strong>Esperando que se una Jugador O...</strong><br />
+            El juego se habilitará automáticamente al unirse.
+        </div>
+        <h2 class="text-2xl font-semibold">Turno de Jugador O</h2>
+        <div class="game-board mt-4">
+            @for (var i = 0; i < 9; i++)
+            {
+                <button class="cell" disabled></button>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="game-screen">
+            <h2 class="game-status">@GameStatus</h2>
+
+  <div class="game-board">
+                    @for (var i = 0; i < 9; i++)
+                    {
+                        var cellIndex = i;
+                        <button class="cell @GetPlayerClass(board[cellIndex])"
+                                @onclick="() => HandleCellClick(cellIndex)"
+                                disabled="@(board[cellIndex] != null || ganador != null || esEmpate)">
+                            @board[cellIndex]?.ToString()
+                        </button>
+                    }
+                </div>
+
+            <div class="mt-4">
+                <button class="btn btn-secondary" @onclick="Volver">Reiniciar</button>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public int partidaId { get; set; }
+    [Parameter] public string jugador { get; set; } = "X";
+
+    private string?[] board = new string?[9];
+    private string turno = "X";
+    private string? ganador;
+    private bool esEmpate;
+    private bool cargado;
+    private bool juegoListo;
+    private PartidaResponse? partida;
+    private System.Threading.PeriodicTimer? refresco;
+
+    private string GameStatus
+    {
+        get
+        {
+            if (ganador != null) return $"🏆 ¡Ganó {ganador}!";
+            if (esEmpate) return "🤝 ¡Empate!";
+            return $"Turno de Jugador {turno}";
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await CargarPartida();
+        IniciarRefresco();
+    }
+
+    private async Task CargarPartida()
+    {
+        partida = await PartidasApi.GetPartidaAsync(partidaId);
+        if (partida == null)
+        {
+            NavManager.NavigateTo("/");
+            return;
+        }
+
+        juegoListo = partida.Jugador2Id != null;
+        await CargarMovimientos();
+        cargado = true;
+        StateHasChanged();
+    }
+
+    private async Task CargarMovimientos()
+    {
+        var movimientos = await MovimientosApi.GetMovimientosAsync(partidaId);
+        board = new string?[9];
+
+        foreach (var m in movimientos)
+        {
+            var index = m.PosicionFila * 3 + m.PosicionColumna;
+            if (index >= 0 && index < 9)
+                board[index] = m.Jugador;
+        }
+
+        turno = (movimientos.Count % 2 == 0) ? "X" : "O";
+        ganador = RevisarGanador();
+        esEmpate = board.All(x => x != null) && ganador == null;
+    }
+
+    private void IniciarRefresco()
+    {
+        refresco = new System.Threading.PeriodicTimer(TimeSpan.FromSeconds(2));
+        _ = Task.Run(async () =>
+        {
+            while (await refresco.WaitForNextTickAsync())
+            {
+                await InvokeAsync(async () =>
+                {
+                    await CargarPartida();
+                    await CargarMovimientos();
+                    StateHasChanged();
+                });
+            }
+        });
+    }
+
+    private async Task HandleCellClick(int index)
+    {
+        if (!juegoListo || board[index] != null || ganador != null || esEmpate || turno != jugador)
+            return;
+
+        var fila = index / 3;
+        var columna = index % 3;
+        var ok = await MovimientosApi.PostMovimientoAsync(partidaId, jugador, fila, columna);
+
+        if (ok)
+        {
+            await Task.Delay(1000);
+            await CargarMovimientos();
+        }
+    }
+
+    private string? RevisarGanador()
+    {
+        int[][] lineas = {
+            new[]{0,1,2}, new[]{3,4,5}, new[]{6,7,8},
+            new[]{0,3,6}, new[]{1,4,7}, new[]{2,5,8},
+            new[]{0,4,8}, new[]{2,4,6}
+    };
+
+        foreach (var l in lineas)
+        {
+            if (board[l[0]] != null && board[l[0]] == board[l[1]] && board[l[1]] == board[l[2]])
+                return board[l[0]];
+        }
+        return null;
+    }
+
+    private string GetPlayerClass(string? p)
+    {
+        if (p == "X") return "player-x";
+        if (p == "O") return "player-o";
+        return "";
+    }
+
+    private void Volver()
+    {
+        refresco?.Dispose();
+        NavManager.NavigateTo("/");
+    }
+}
