@@ -1,53 +1,96 @@
 ﻿@page "/"
-
 @rendermode InteractiveServer
 @using RegistroJugadores.Models
+@using RegistroJugadores.ApiDTO
 @inject RegistroJugadores.Services.JugadoresService jugadoresService
 @inject RegistroJugadores.Services.PartidasService partidasService
+@inject RegistroJugadores.Services.IPartidasApiService partidasApiService
 @inject NavigationManager NavManager
 
 <PageTitle>Home</PageTitle>
 
 <div class="container mx-auto max-w-lg p-6 bg-white rounded-lg shadow-xl text-center">
-    <h1 class="text-2xl font-bold mb-4">Nueva Partida</h1>
 
-    <div class="mb-4">
-        <label class="block">Jugador X</label>
-        <select class="form-select w-full" @bind="jugador1Id">
-            <option value="0">-- Selecciona --</option>
-            @foreach (var j in jugadores)
-            {
-                <option value="@j.JugadorId" disabled="@(jugador2Id != 0 && j.JugadorId == jugador2Id)">
-                    @j.Nombres
-                </option>
-            }
-        </select>
+    <div class="mb-8 p-4 border rounded-lg shadow-sm bg-gray-50">
+        <h2 class="text-xl font-semibold mb-4">Crear nueva partida</h2>
+
+        <div class="mb-4">
+            <label class="block mb-1 font-medium">Jugador X</label>
+            <select class="form-select w-full border rounded p-2" @bind="jugador1Id">
+                <option value="0">-- Selecciona --</option>
+                @foreach (var j in jugadores)
+                {
+                    <option value="@j.JugadorId" disabled="@(jugador2Id != 0 && j.JugadorId == jugador2Id)">
+                        @j.Nombres
+                    </option>
+                }
+            </select>
+        </div>
+
+        <div class="mb-4">
+            <label class="block mb-1 font-medium">Jugador O</label>
+            <select class="form-select w-full border rounded p-2" @bind="jugador2Id">
+                <option value="0">-- Selecciona --</option>
+                @foreach (var j in jugadores)
+                {
+                    <option value="@j.JugadorId" disabled="@(jugador1Id != 0 && j.JugadorId == jugador1Id)">
+                        @j.Nombres
+                    </option>
+                }
+            </select>
+        </div>
+
+        <button class="btn btn-success w-full mt-3"
+                disabled="@(jugador1Id == 0 || jugador2Id == 0 || jugador1Id == jugador2Id)"
+                @onclick="IniciarPartida">
+            Iniciar Partida
+        </button>
     </div>
 
-    <div class="mb-4">
-        <label class="block">Jugador O</label>
-        <select class="form-select w-full" @bind="jugador2Id">
-            <option value="0">-- Selecciona --</option>
-            @foreach (var j in jugadores)
-            {
-                <option value="@j.JugadorId" disabled="@(jugador1Id != 0 && j.JugadorId == jugador1Id)">
-                    @j.Nombres
-                </option>
-            }
-        </select>
-    </div>
+    <div class="p-4 border rounded-lg shadow-sm bg-gray-50">
+        <h2 class="text-xl font-semibold mb-4">Buscar / Unirse a Partida</h2>
 
-    <button class="btn btn-success btn-lg mt-4"
-            disabled="@(jugador1Id == 0 || jugador2Id == 0 || jugador1Id == jugador2Id)"
-            @onclick="IniciarPartida">
-        Iniciar Partida
-    </button>
+        <div class="mb-3">
+            <label class="block mb-1 font-medium">ID de la Partida</label>
+            <input type="number" class="form-input w-full border rounded p-2 text-center"
+                   @bind="buscarPartidaId" placeholder="Ejemplo: 5" />
+        </div>
+
+        <div class="mb-3">
+            <label class="block mb-1 font-medium">Tu ID de Jugador</label>
+            <input type="number" class="form-input w-full border rounded p-2 text-center"
+                   @bind="jugadorApiId" placeholder="Tu ID (jugador local)" />
+        </div>
+
+        <div class="mb-3">
+            <label class="block mb-1 font-medium">Rol</label>
+            <select class="form-select w-full border rounded p-2 text-center" @bind="rolSeleccionado">
+                <option value="">-- Selecciona --</option>
+                <option value="X">Jugador X</option>
+                <option value="O">Jugador O</option>
+            </select>
+        </div>
+
+        <button class="btn btn-primary w-full mt-2" @onclick="BuscarPartida">
+            Buscar y Unirse
+        </button>
+
+        @if (!string.IsNullOrEmpty(mensajeApi))
+        {
+            <div class="mt-3 font-semibold" style="color:@mensajeColor">@mensajeApi</div>
+        }
+    </div>
 </div>
 
 @code {
     private List<Jugadores> jugadores = new();
     private int jugador1Id;
     private int jugador2Id;
+    private int buscarPartidaId;
+    private int jugadorApiId;
+    private string rolSeleccionado = "";
+    private string mensajeApi = "";
+    private string mensajeColor = "red";
 
     protected override async Task OnInitializedAsync()
     {
@@ -60,7 +103,7 @@
             {
                 Jugador1Id = jugador1Id,
                 Jugador2Id = jugador2Id,
-                EstadoTablero = "---------", 
+                EstadoTablero = "---------",
                 TurnoJugadorId = jugador1Id,
                 EstadoPartida = "En progreso",
                 FechaInicio = DateTime.UtcNow
@@ -68,11 +111,51 @@
 
         var creada = await partidasService.Guardar(partida);
         if (creada != null)
+            NavManager.NavigateTo($"/board/{creada.PartidaId}/X");
+    }
+
+    private async Task BuscarPartida()
+    {
+        mensajeApi = "";
+
+        if (buscarPartidaId <= 0)
         {
-            NavManager.NavigateTo($"/board/{creada.PartidaId}");
+            mensajeApi = "Ingresa un ID de partida válido.";
+            return;
+        }
+
+        var partida = await partidasApiService.GetPartidaAsync(buscarPartidaId);
+        if (partida == null)
+        {
+            mensajeApi = "No se encontró la partida.";
+            return;
+        }
+
+        if (rolSeleccionado == "O")
+        {
+            if (partida.Jugador2Id != null)
+            {
+                mensajeApi = " El jugador O ya está ocupado.";
+                return;
+            }
+
+            var ok = await partidasApiService.JoinPartidaViaPutAsync(buscarPartidaId, jugadorApiId);
+            if (ok)
+            {
+                mensajeApi = "Te has unido correctamente.";
+                mensajeColor = "green";
+                NavManager.NavigateTo($"/board/{buscarPartidaId}/O");
+            }
+            else
+                mensajeApi = " No se pudo unir a la partida.";
+        }
+        else if (rolSeleccionado == "X")
+        {
+            NavManager.NavigateTo($"/board/{buscarPartidaId}/X");
         }
         else
         {
+            mensajeApi = "Selecciona un rol válido (X u O).";
         }
     }
 }
